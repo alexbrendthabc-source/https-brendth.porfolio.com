@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brendth Platform Run - Arcade Pixel Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@600;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --ink: #070a12;
+  --panel: rgba(18, 24, 40, 0.92);
+  --line: #2e3a59;
+  --accent: #ffd84d;
+  --danger: #ff4d67;
+  --good: #58e38a;
+  --cyan: #51e5ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #060911;
+  background-image: 
+    radial-gradient(circle at 50% 10%, #172036 0%, transparent 60%),
+    radial-gradient(circle at 80% 80%, #0d1526 0%, transparent 50%);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-page {
+  width: 100%;
+  max-width: 1160px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-shell {
+  width: 100%;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #a2b4db 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  color: #7b8ba9;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 5px;
+  letter-spacing: 0.5px;
+}
+
+.badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  border: 1px solid rgba(81, 229, 255, 0.3);
+  background: rgba(14, 23, 42, 0.8);
+  border-radius: 20px;
+  padding: 8px 14px;
+  color: var(--cyan);
+  box-shadow: 0 0 15px rgba(81, 229, 255, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.game-frame {
+  position: relative;
+  background: #080c14;
+  border: 2px solid #28334c;
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 
+    0 25px 80px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(40, 51, 76, 0.2);
+}
+
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0d121d;
+  aspect-ratio: 11 / 6.2;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.hud {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.hud-left, .hud-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hud-card {
+  background: rgba(10, 14, 24, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 90px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.hud-label {
+  display: block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  text-transform: uppercase;
+  color: #6c7c9c;
+  margin-bottom: 4px;
+}
+
+.hud-value {
+  display: block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hearts {
+  color: #ff4d67;
+  letter-spacing: 2px;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+
+.chase-box {
+  width: 160px;
+}
+
+.chase-bar {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: #1c2438;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#chaseFill {
+  height: 100%;
+  width: 24%;
+  background: linear-gradient(90deg, #ff4d67, #ff8e53);
+  box-shadow: 0 0 10px rgba(255, 77, 103, 0.6);
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 9, 16, 0.82);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.overlay.hidden {
+  display: none;
+  opacity: 0;
+}
+
+.dialog {
+  width: min(480px, 90%);
+  text-align: center;
+  padding: 36px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(20, 27, 45, 0.95) 0%, rgba(12, 16, 28, 0.98) 100%);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), 0 0 30px rgba(81, 229, 255, 0.1);
+}
+
+.dialog h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 20px;
+  margin: 0 0 14px;
+  background: linear-gradient(180deg, #ffd84d 0%, #ff9800 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.4;
+}
+
+.dialog p {
+  color: #9aa8c4;
+  line-height: 1.6;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  border: 0;
+  border-radius: 10px;
+  padding: 14px 24px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ffd84d 0%, #f5ab00 100%);
+  color: #0c101d;
+  margin: 6px;
+  box-shadow: 0 6px 20px rgba(255, 216, 77, 0.3);
+  transition: all 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 216, 77, 0.45);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.secondary {
+  background: linear-gradient(180deg, #2a3550 0%, #1a2235 100%);
+  color: #d0daf0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-top: 14px;
+  color: #6a7996;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.key {
+  display: inline-flex;
+  min-width: 28px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  margin: 0 2px;
+  border: 1px solid #3d4a68;
+  border-bottom: 3px solid #232d42;
+  border-radius: 6px;
+  background: #182033;
+  color: #e2e9f8;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.mobile-controls {
+  display: none;
+  justify-content: space-between;
+  margin-top: 14px;
+  user-select: none;
+  touch-action: none;
+}
+
+.pad {
+  display: flex;
+  gap: 10px;
+}
+
+.touch-btn {
+  width: 64px;
+  height: 56px;
+  border: 1px solid #3d4c6d;
+  border-bottom: 4px solid #1a2233;
+  border-radius: 12px;
+  background: #182133;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.info-card {
+  background: rgba(15, 21, 35, 0.6);
+  border: 1px solid #202b42;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.info-card strong {
+  display: block;
+  font-size: 13px;
+  color: #d1dbe8;
+  margin-bottom: 4px;
+}
+
+.info-card span {
+  color: #6a7895;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+@media(max-width: 768px) {
+  .game-page { padding: 10px; }
+  .game-frame { padding: 6px; border-radius: 14px; }
+  .badge { display: none; }
+  .controls { display: none; }
+  .mobile-controls { display: flex; }
+  .info { display: none; }
+  .hud { left: 10px; right: 10px; top: 10px; }
+  .hud-card { padding: 6px 8px; min-width: 60px; }
+  .hud-label { font-size: 6px; }
+  .hud-value { font-size: 10px; }
+  .chase-box { width: 100px; }
+}
+</style>
+</head>
+
+<body>
+<main class="game-page">
+<div class="game-shell">
+
+  <div class="topbar">
+    <div>
+      <div class="title">BRENDTH • PLATFORM RUN</div>
+      <div class="subtitle">Pixel Arcade • Allied Heroine • Ice & Fire Hot Weapons</div>
+    </div>
+    <div class="badge">SUPER ARCADE EDITION</div>
+  </div>
+
+  <div class="game-frame">
+    <div class="canvas-wrap">
+      <canvas id="game" width="1100" height="620"></canvas>
+
+      <div class="hud">
+        <div class="hud-left">
+          <div class="hud-card">
+            <span class="hud-label">Score</span>
+            <span class="hud-value" id="score">00000</span>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">Weapon</span>
+            <span class="hud-value" id="weapon">NORMAL</span>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">Lives</span>
+            <span class="hud-value hearts" id="lives">♥♥♥</span>
+          </div>
+        </div>
+        <div class="hud-right">
+          <div class="hud-card">
+            <span class="hud-label">Ally</span>
+            <span class="hud-value" id="allyTimer">OFF</span>
+          </div>
+          <div class="hud-card chase-box">
+            <span class="hud-label">Ghost Distance</span>
+            <div class="chase-bar"><div id="chaseFill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay" id="overlay">
+        <div class="dialog">
+          <h1 id="overlayTitle">PIXEL ARCADE</h1>
+          <p id="overlayText">
+            Headbutt <strong>[?] Blocks</strong> to unlock <strong>FireHot</strong>, <strong>Ice Shooter</strong>, <strong>Super Mushroom</strong>, or summon your <strong>Pixel Fire Heroine Ally</strong> for 60 seconds! Press <strong>[J] / [Z]</strong> to shoot!
+          </p>
+          <button class="btn" id="startBtn">START RUN</button>
+          <button class="btn secondary" id="restartBtn" style="display:none">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <span class="key">A</span><span class="key">D</span> Move
+      &nbsp; <span class="key">W</span> / <span class="key">SPACE</span> Jump
+      &nbsp; <span class="key">J</span> / <span class="key">Z</span> Shoot
+      &nbsp; <span class="key">P</span> Pause
+    </div>
+    <div>Retro Pixel Artwork & Weapon Upgrades Enabled</div>
+  </div>
+
+  <div class="mobile-controls">
+    <div class="pad">
+      <button class="touch-btn" id="leftBtn">◀</button>
+      <button class="touch-btn" id="rightBtn">▶</button>
+    </div>
+    <button class="touch-btn" id="shootBtn">🔥</button>
+    <button class="touch-btn" id="jumpBtn">▲</button>
+  </div>
+
+  <div class="info">
+    <div class="info-card">
+      <strong>🔥 Pixel Heroine Ally</strong>
+      <span>Summon a powerful pixel heroine ally who floats by your side and blasts enemies with flame bursts for 60s!</span>
+    </div>
+    <div class="info-card">
+      <strong>🧊 Ice Shooter & FireHot</strong>
+      <span>Collect FireHot for bouncing fireballs or Ice Shooter to fire chilling ice cubes that freeze enemies!</span>
+    </div>
+    <div class="info-card">
+      <strong>🍄 Super Item</strong>
+      <span>Hit [?] blocks to get Super Mushrooms and become giant with increased jump power and durability!</span>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+// --- Web Audio Synthesizer ---
+class SoundFX {
+  constructor() { this.ctx = null; }
+  init() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  playTone(freq, type, duration, startVol = 0.1, endVol = 0) {
+    if (!this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(startVol, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, endVol), this.ctx.currentTime + duration);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + duration);
+    } catch (e) {}
+  }
+  jump() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(460, now + 0.12);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.12);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 0.12);
+  }
+  fire() {
+    if (!this.ctx) return;
+    this.playTone(600, 'sawtooth', 0.08, 0.08, 0.01);
+  }
+  ice() {
+    if (!this.ctx) return;
+    this.playTone(900, 'sine', 0.12, 0.08, 0.01);
+  }
+  blockHit() {
+    if (!this.ctx) return;
+    this.playTone(320, 'triangle', 0.1, 0.1, 0.01);
+  }
+  powerup() {
+    if (!this.ctx) return;
+    const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+    notes.forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.08, 0.06, 0.01), i * 40));
+  }
+  hurt() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.linearRampToValueAtTime(40, now + 0.2);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.2);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(now + 0.2);
+  }
+}
+
+const sfx = new SoundFX();
+
+// --- Canvas & Core Engine ---
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const W = canvas.width, H = canvas.height;
+const groundY = 510;
+const gravity = 1900;
+
+let running = false;
+let paused = false;
+let gameOver = false;
+let last = 0;
+let cameraX = 0;
+let score = 0;
+let lives = 3;
+let level = 1;
+let levelDistance = 0;
+let spawnTimer = 0;
+let flash = 0;
+let shake = 0;
+
+const keys = {};
+const platforms = [];
+const blocks = [];
+const items = [];
+const hazards = [];
+const playerProjectiles = [];
+const enemyProjectiles = [];
+const particles = [];
+
+const player = {
+  x:200, y:430, w:38, h:54,
+  vx:0, vy:0,
+  speed:320,
+  jump:740,
+  grounded:false,
+  inv:0, superSize:1, weapon:"normal", weaponTimer:0,
+  facing:1, shootCooldown:0
+};
+
+// Allied Pixel Heroine Girl
+const ally = {
+  active: false,
+  timer: 0,
+  x: 150, y: 380,
+  w: 32, h: 48,
+  shootCooldown: 0,
+  anim: 0
+};
+
+// Ghost Chaser
+const ghost = {
+  x:20, y:430, w:46, h:52,
+  vx:0, vy:0,
+  speed:210,
+  jumpForce:720,
+  grounded:false,
+  frozen:0
+};
+
+function resetGame(){
+  running=false; paused=false; gameOver=false;
+  cameraX=0; score=0; lives=3; level=1; levelDistance=0; spawnTimer=0;
+  platforms.length=0; blocks.length=0; items.length=0;
+  hazards.length=0; playerProjectiles.length=0; enemyProjectiles.length=0; particles.length=0;
+
+  Object.assign(player, { x:200, y:420, vx:0, vy:0, grounded:false, inv:0, superSize:1, weapon:"normal", weaponTimer:0, facing:1, shootCooldown:0 });
+  Object.assign(ghost, { x:20, y:420, vx:0, vy:0, grounded:false, frozen:0 });
+  Object.assign(ally, { active:false, timer:0, x:150, y:380, shootCooldown:0, anim:0 });
+
+  platforms.push(
+    {x:-400, y:groundY, w:2400, h:110, type:"ground"},
+    {x:500, y:400, w:180, h:28, type:"platform"},
+    {x:800, y:330, w:180, h:28, type:"platform"}
+  );
+
+  blocks.push(
+    {x:560, y:280, w:36, h:36, type:"marioBlock", hit:false, item:"super"},
+    {x:860, y:210, w:36, h:36, type:"marioBlock", hit:false, item:"firehot"}
+  );
+
+  updateHUD();
+}
+
+function startGame(){
+  sfx.init();
+  if(gameOver) resetGame();
+  running=true; paused=false; gameOver=false;
+  hideOverlay();
+}
+
+function endGame(){
+  sfx.hurt();
+  running=false; gameOver=true;
+  showOverlay("GAME OVER", `Final Score: ${score}. Level Reached: ${level}.`);
+  document.getElementById("restartBtn").style.display="inline-block";
+  document.getElementById("startBtn").style.display="none";
+}
+
+function showOverlay(title,text){
+  document.getElementById("overlayTitle").textContent=title;
+  document.getElementById("overlayText").textContent=text;
+  document.getElementById("overlay").classList.remove("hidden");
+}
+function hideOverlay(){ document.getElementById("overlay").classList.add("hidden"); }
+
+document.getElementById("startBtn").onclick=startGame;
+document.getElementById("restartBtn").onclick=()=>{ resetGame(); startGame(); };
+
+function input(){
+  return keys["ArrowLeft"]||keys["a"]||keys["A"] ? -1 : keys["ArrowRight"]||keys["d"]||keys["D"] ? 1 : 0;
+}
+
+function jump(){
+  if(!running || paused) return;
+  if(player.grounded){
+    player.vy = -player.jump * (player.superSize > 1 ? 1.05 : 1);
+    player.grounded = false;
+    sfx.jump();
+    burst(player.x+player.w/2, player.y+player.h, 8, "#ffffff");
+  }
+}
+
+function shoot(){
+  if(!running || paused || player.shootCooldown > 0) return;
+  if(player.weapon === "firehot"){
+    sfx.fire();
+    playerProjectiles.push({
+      x: player.x + (player.facing === 1 ? player.w + 4 : -10),
+      y: player.y + 18,
+      vx: player.facing * 520, vy: -120,
+      type: "fireball", r: 8, bounces: 3
+    });
+    player.shootCooldown = 0.22;
+  } else if(player.weapon === "iceshooter"){
+    sfx.ice();
+    playerProjectiles.push({
+      x: player.x + (player.facing === 1 ? player.w + 4 : -10),
+      y: player.y + 18,
+      vx: player.facing * 580, vy: 0,
+      type: "icecube", r: 9
+    });
+    player.shootCooldown = 0.25;
+  }
+}
+
+window.addEventListener("keydown", e => {
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+  keys[e.key]=true;
+  if(e.key===" "||e.key==="ArrowUp"||e.key==="w"||e.key==="W") jump();
+  if(e.key==="j"||e.key==="J"||e.key==="z"||e.key==="Z") shoot();
+  if(e.key==="p"||e.key==="P"||e.key==="Escape") togglePause();
+});
+window.addEventListener("keyup", e => keys[e.key]=false);
+
+function bindTouch(id,key){
+  const el=document.getElementById(id);
+  const down=e=>{ e.preventDefault(); keys[key]=true; };
+  const up=e=>{ e.preventDefault(); keys[key]=false; };
+  ["pointerdown","touchstart"].forEach(ev=>el.addEventListener(ev,down,{passive:false}));
+  ["pointerup","pointercancel","pointerleave","touchend"].forEach(ev=>el.addEventListener(ev,up,{passive:false}));
+}
+bindTouch("leftBtn","ArrowLeft"); bindTouch("rightBtn","ArrowRight");
+document.getElementById("jumpBtn").addEventListener("pointerdown",e=>{ e.preventDefault(); jump(); });
+document.getElementById("shootBtn").addEventListener("pointerdown",e=>{ e.preventDefault(); shoot(); });
+
+function togglePause(){
+  if(!running || gameOver) return;
+  paused=!paused;
+  if(paused) showOverlay("PAUSED","Game paused. Press P to resume.");
+  else hideOverlay();
+}
+
+// --- Main Game Loop ---
+function update(dt){
+  if(!running || paused) return;
+
+  const dir = input();
+  const speedMult = player.superSize > 1 ? 1.12 : 1;
+  const targetVx = dir * player.speed * speedMult;
+
+  player.vx += (targetVx - player.vx) * Math.min(1, dt * 10);
+  if(dir === 0) player.vx *= Math.pow(.02, dt);
+  player.x += player.vx * dt;
+
+  if(player.vx > 10) player.facing = 1;
+  if(player.vx < -10) player.facing = -1;
+
+  player.vy += gravity * dt;
+  const oldY = player.y;
+  player.y += player.vy * dt;
+  player.grounded = false;
+
+  if(player.shootCooldown > 0) player.shootCooldown -= dt;
+  if(player.weaponTimer > 0){
+    player.weaponTimer -= dt;
+    if(player.weaponTimer <= 0) player.weapon = "normal";
+  }
+
+  // Platform collisions
+  for(const p of platforms){
+    if(player.x + player.w > p.x && player.x < p.x + p.w &&
+       oldY + player.h <= p.y + 8 && player.y + player.h >= p.y && player.vy >= 0){
+      player.y = p.y - player.h;
+      player.vy = 0;
+      player.grounded = true;
+    }
+  }
+
+  // Mario [?] Block collisions
+  for(const b of blocks){
+    if(player.x + player.w > b.x && player.x < b.x + b.w &&
+       oldY + player.h <= b.y + 4 && player.y + player.h >= b.y && player.vy >= 0){
+      player.y = b.y - player.h;
+      player.vy = 0;
+      player.grounded = true;
+    }
+    // Headbutt block underneath
+    if(player.x + player.w > b.x && player.x < b.x + b.w &&
+       oldY >= b.y + b.h - 4 && player.y <= b.y + b.h && player.vy < 0){
+      player.y = b.y + b.h;
+      player.vy = 30;
+      if(!b.hit){
+        b.hit = true;
+        sfx.blockHit();
+        spawnItemFromBlock(b);
+        burst(b.x + b.w/2, b.y, 12, "#ffd84d");
+      }
+    }
+  }
+
+  // Camera tracking
+  if(player.x < cameraX - 20) player.x = cameraX - 20;
+  if(player.x > cameraX + W - 100) player.x = cameraX + W - 100;
+  cameraX += (player.x - 260 - cameraX) * Math.min(1, dt * 4.5);
+  if(cameraX < 0) cameraX = 0;
+
+  levelDistance += Math.max(0, player.vx) * dt;
+  score += Math.floor(Math.max(0, player.vx) * dt * .04);
+
+  // Spawning logic
+  spawnTimer -= dt;
+  if(spawnTimer <= 0){
+    spawnRandomSection(cameraX + W + 100);
+    spawnTimer = 1.2 + Math.random() * 0.9;
+  }
+
+  // Items update
+  for(let i = items.length - 1; i >= 0; i--){
+    const it = items[i];
+    it.vy += gravity * dt;
+    it.x += it.vx * dt;
+    it.y += it.vy * dt;
+
+    for(const p of platforms){
+      if(it.x + 12 > p.x && it.x - 12 < p.x + p.w && it.y + 12 >= p.y && it.y - 12 < p.y + p.h){
+        it.y = p.y - 12;
+        it.vy = -180;
+      }
+    }
+
+    if(player.x < it.x + 16 && player.x + player.w > it.x - 16 &&
+       player.y < it.y + 16 && player.y + player.h > it.y - 16){
+      activateItem(it.type);
+      sfx.powerup();
+      burst(it.x, it.y, 20, it.color);
+      items.splice(i, 1);
+    }
+  }
+
+  // Update Ally (Sexy Pixel Heroine)
+  updateAlly(dt);
+
+  // Update Ghost AI
+  updateGhostAI(dt);
+
+  // Update Hazards & Projectiles
+  updateProjectilesAndHazards(dt);
+
+  if(player.inv > 0) player.inv -= dt;
+
+  flash = Math.max(0, flash - dt);
+  shake = Math.max(0, shake - dt);
+  updateHUD();
+}
+
+// --- Ally Heroine AI ---
+function updateAlly(dt){
+  if(!ally.active) return;
+
+  ally.timer -= dt;
+  if(ally.timer <= 0){
+    ally.active = false;
+    burst(ally.x, ally.y, 20, "#ff536d");
+    return;
+  }
+
+  // Smooth floating follow position next to player
+  const targetX = player.x - 45 * player.facing;
+  const targetY = player.y - 20 + Math.sin(Date.now() * 0.005) * 8;
+  ally.x += (targetX - ally.x) * Math.min(1, dt * 6);
+  ally.y += (targetY - ally.y) * Math.min(1, dt * 6);
+  ally.anim += dt * 8;
+
+  // Auto shoot fire bursts at enemies/ghost
+  ally.shootCooldown -= dt;
+  if(ally.shootCooldown <= 0){
+    sfx.fire();
+    playerProjectiles.push({
+      x: ally.x + 16, y: ally.y + 12,
+      vx: player.facing * 650, vy: -30,
+      type: "allyFire", r: 10
+    });
+    ally.shootCooldown = 0.4;
+  }
+}
+
+// --- Ghost AI ---
+function updateGhostAI(dt){
+  if(ghost.frozen > 0){
+    ghost.frozen -= dt;
+    return;
+  }
+
+  const targetX = player.x - 80;
+  const ghostSpeed = ghost.speed + level * 12;
+
+  if(ghost.x < targetX) ghost.vx = ghostSpeed;
+  else if(ghost.x > targetX + 120) ghost.vx = -ghostSpeed * 0.5;
+  else ghost.vx = ghostSpeed * 0.8;
+
+  ghost.x += ghost.vx * dt;
+  ghost.vy += gravity * dt;
+  const oldGy = ghost.y;
+  ghost.y += ghost.vy * dt;
+  ghost.grounded = false;
+
+  for(const p of platforms){
+    if(ghost.x + ghost.w > p.x && ghost.x < p.x + p.w){
+      if(oldGy + ghost.h <= p.y + 8 && ghost.y + ghost.h >= p.y && ghost.vy >= 0){
+        ghost.y = p.y - ghost.h;
+        ghost.vy = 0;
+        ghost.grounded = true;
+      }
+    }
+  }
+
+  if(ghost.grounded && player.y < ghost.y - 40 && Math.abs(player.x - ghost.x) < 280){
+    ghost.vy = -ghost.jumpForce;
+    ghost.grounded = false;
+  }
+
+  if(player.x < ghost.x + ghost.w - 10 && player.x + player.w > ghost.x + 10 &&
+     player.y < ghost.y + ghost.h - 10 && player.y + player.h > ghost.y + 10){
+    loseLife();
+    ghost.x = player.x - 220;
+  }
+}
+
+// --- Projectiles & Hazards ---
+function updateProjectilesAndHazards(dt){
+  // Player Projectiles
+  for(let i = playerProjectiles.length - 1; i >= 0; i--){
+    const p = playerProjectiles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+
+    if(p.type === "fireball"){
+      p.vy += gravity * 0.4 * dt;
+      for(const plat of platforms){
+        if(p.x > plat.x && p.x < plat.x + plat.w && p.y + p.r >= plat.y && p.y - p.r < plat.y + plat.h){
+          p.y = plat.y - p.r;
+          p.vy = -220;
+          p.bounces--;
+        }
+      }
+    }
+
+    // Hit Ghost
+    if(p.x > ghost.x && p.x < ghost.x + ghost.w && p.y > ghost.y && p.y < ghost.y + ghost.h){
+      if(p.type === "icecube"){
+        ghost.frozen = 3.5; // Freeze ghost for 3.5 seconds
+        burst(ghost.x + ghost.w/2, ghost.y + ghost.h/2, 20, "#51e5ff");
+      } else {
+        ghost.x -= 80; // Push back ghost
+        burst(ghost.x + ghost.w/2, ghost.y + ghost.h/2, 20, "#ff4d67");
+      }
+      score += 200;
+      playerProjectiles.splice(i, 1);
+      continue;
+    }
+
+    // Hit Hazards
+    for(let j = hazards.length - 1; j >= 0; j--){
+      const h = hazards[j];
+      if(Math.abs(p.x - h.x) < 25 && Math.abs(p.y - h.y) < 25){
+        burst(h.x, h.y, 18, "#ffd84d");
+        hazards.splice(j, 1);
+        playerProjectiles.splice(i, 1);
+        score += 300;
+        break;
+      }
+    }
+
+    if(p && (p.x < cameraX - 100 || p.x > cameraX + W + 100 || p.bounces <= 0)){
+      playerProjectiles.splice(i, 1);
+    }
+  }
+
+  // Update Hazards
+  for(let i = hazards.length - 1; i >= 0; i--){
+    const h = hazards[i];
+    h.t = (h.t || 0) + dt;
+
+    if(h.type === "plant"){
+      h.offset = Math.sin(h.t * 3) * 30;
+      const plantY = h.y - 30 + h.offset;
+      if(player.x < h.x + 20 && player.x + player.w > h.x - 20 &&
+         player.y < plantY + 25 && player.y + player.h > plantY - 25){
+        loseLife();
+      }
+    } else if(h.type === "shooter"){
+      h.cooldown = (h.cooldown || 0) - dt;
+      if(h.cooldown <= 0 && Math.abs(player.x - h.x) < 600){
+        enemyProjectiles.push({ x: h.x - 10, y: h.y - 20, vx: -320, vy: 0, r: 8 });
+        h.cooldown = 2.2;
+      }
+    } else if(h.type === "turtle"){
+      h.x += (h.dir || 1) * 60 * dt;
+      if(h.x > h.maxX || h.x < h.minX) h.dir *= -1;
+      h.spikes = Math.sin(h.t * 4) > 0;
+
+      if(player.x < h.x + 18 && player.x + player.w > h.x - 18 &&
+         player.y < h.y + 18 && player.y + player.h > h.y - 18){
+        if(player.vy > 0 && player.y + player.h < h.y + 5 && !h.spikes){
+          player.vy = -450;
+          score += 300;
+          burst(h.x, h.y, 15, "#58e38a");
+          hazards.splice(i, 1);
+        } else {
+          loseLife();
+        }
+      }
+    }
+  }
+
+  // Enemy Projectiles
+  for(let i = enemyProjectiles.length - 1; i >= 0; i--){
+    const p = enemyProjectiles[i];
+    p.x += p.vx * dt;
+    if(player.x < p.x + p.r && player.x + player.w > p.x - p.r &&
+       player.y < p.y + p.r && player.y + player.h > p.y - p.r){
+      loseLife();
+      enemyProjectiles.splice(i, 1);
+    } else if(p.x < cameraX - 100){
+      enemyProjectiles.splice(i, 1);
+    }
+  }
+}
+
+function spawnRandomSection(x){
+  const r = Math.random();
+  if(r < .28){
+    platforms.push({ x, y: 430, w: 70, h: 80, type: "pipe" });
+    hazards.push({ x: x + 35, y: 430, type: "plant", t: Math.random() });
+    blocks.push({ x: x + 15, y: 290, w: 36, h: 36, type: "marioBlock", hit: false, item: "iceshooter" });
+  } else if(r < .56){
+    platforms.push({ x, y: 380, w: 160, h: 28, type: "platform" });
+    hazards.push({ x: x + 120, y: 380, type: "shooter", cooldown: 1 });
+    blocks.push({ x: x + 40, y: 250, w: 36, h: 36, type: "marioBlock", hit: false, item: "firegirl" });
+  } else {
+    platforms.push({ x, y: 370, w: 220, h: 28, type: "platform" });
+    hazards.push({ x: x + 100, y: 350, minX: x + 20, maxX: x + 180, dir: 1, type: "turtle", t: 0 });
+    blocks.push({ x: x + 90, y: 220, w: 36, h: 36, type: "marioBlock", hit: false, item: "super" });
+  }
+}
+
+function spawnItemFromBlock(b){
+  const colors = { super: "#ff4d67", firehot: "#ff7700", iceshooter: "#51e5ff", firegirl: "#ff3b9d" };
+  items.push({
+    x: b.x + b.w / 2,
+    y: b.y - 20,
+    vx: 60, vy: -220,
+    type: b.item,
+    color: colors[b.item] || "#fff"
+  });
+}
+
+function activateItem(type){
+  if(type === "super"){
+    player.superSize = 1.35;
+    player.h = 68;
+    score += 400;
+  } else if(type === "firehot"){
+    player.weapon = "firehot";
+    player.weaponTimer = 20;
+    score += 500;
+  } else if(type === "iceshooter"){
+    player.weapon = "iceshooter";
+    player.weaponTimer = 20;
+    score += 500;
+  } else if(type === "firegirl"){
+    ally.active = true;
+    ally.timer = 60; // Sexy Pixel Heroine Ally lasts for 60 seconds
+    score += 1000;
+  }
+}
+
+function loseLife(){
+  if(player.inv > 0) return;
+  sfx.hurt();
+
+  if(player.superSize > 1){
+    player.superSize = 1;
+    player.h = 54;
+    player.inv = 1.5;
+    shake = .2;
+    return;
+  }
+
+  lives--;
+  player.inv = 2;
+  shake = .3;
+  flash = .2;
+  burst(player.x + player.w/2, player.y + player.h/2, 22, "#ff536d");
+
+  if(lives <= 0) endGame();
+}
+
+function updateHUD(){
+  document.getElementById("score").textContent = String(score).padStart(5, "0");
+  document.getElementById("weapon").textContent = player.weapon.toUpperCase();
+  document.getElementById("lives").textContent = "♥".repeat(lives) + "♡".repeat(Math.max(0, 3 - lives));
+  document.getElementById("allyTimer").textContent = ally.active ? Math.ceil(ally.timer) + "s" : "OFF";
+  const dist = Math.max(0, player.x - ghost.x);
+  const pct = Math.max(5, Math.min(100, 100 - (dist / 280) * 100));
+  document.getElementById("chaseFill").style.width = pct + "%";
+}
+
+// --- Pixel Art Renderers ---
+function draw(){
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  if(shake > 0) ctx.translate((Math.random()-.5)*10, (Math.random()-.5)*10);
+
+  // Retro Pixel Night Sky Background
+  ctx.fillStyle = "#0c101c"; ctx.fillRect(0, 0, W, H);
+  for(let i = 0; i < 30; i++){
+    ctx.fillStyle = i % 2 === 0 ? "#ffffff" : "#51e5ff";
+    const x = (i * 90 - cameraX * 0.1) % (W + 100);
+    ctx.fillRect(x < 0 ? x + W : x, 30 + (i * 37) % 200, 3, 3);
+  }
+
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  // Platforms
+  for(const p of platforms) drawPlatformPixel(p);
+
+  // Blocks
+  for(const b of blocks) drawBlockPixel(b);
+
+  // Items
+  for(const it of items) drawItemPixel(it);
+
+  // Hazards & Projectiles
+  drawHazardsAndProjectiles();
+
+  // Allied Pixel Girl
+  if(ally.active) drawSexyPixelGirl(ally.x, ally.y);
+
+  // Ghost & Player
+  drawGhostPixel();
+  drawPlayerPixel();
+
+  // Particles
+  for(const p of particles){
+    ctx.globalAlpha = Math.max(0, p.life / p.max);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  if(flash > 0){
+    ctx.fillStyle = `rgba(255,255,255,${flash*.35})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.restore();
+}
+
+function drawPlatformPixel(p){
+  if(p.type === "ground"){
+    ctx.fillStyle = "#1e293b"; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = "#22c55e"; ctx.fillRect(p.x, p.y, p.w, 12);
+    ctx.fillStyle = "#16a34a"; ctx.fillRect(p.x, p.y + 12, p.w, 4);
+  } else if(p.type === "pipe"){
+    ctx.fillStyle = "#15803d"; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = "#22c55e"; ctx.fillRect(p.x - 4, p.y, p.w + 8, 18);
+  } else {
+    ctx.fillStyle = "#334155"; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = "#38bdf8"; ctx.fillRect(p.x, p.y, p.w, 6);
+  }
+}
+
+function drawBlockPixel(b){
+  ctx.fillStyle = b.hit ? "#475569" : "#eab308";
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 3;
+  ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+  if(!b.hit){
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "16px 'Press Start 2P'";
+    ctx.fillText("?", b.x + 10, b.y + 26);
+  }
+}
+
+function drawItemPixel(it){
+  ctx.fillStyle = it.color;
+  ctx.fillRect(it.x - 10, it.y - 10, 20, 20);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(it.x - 4, it.y - 4, 8, 8);
+}
+
+function drawSexyPixelGirl(x, y){
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+
+  // Long Flowing Magenta Pixel Hair
+  ctx.fillStyle = "#ec4899";
+  ctx.fillRect(-6, -14, 20, 32);
+
+  // Head / Skin
+  ctx.fillStyle = "#fde047";
+  ctx.fillRect(-2, -10, 12, 10);
+
+  // Eyes
+  ctx.fillStyle = "#0284c7";
+  ctx.fillRect(4, -7, 3, 3);
+
+  // Flame Outfit / Bikini Top & Bottom
+  ctx.fillStyle = "#f97316";
+  ctx.fillRect(-2, 2, 12, 6);  // Top
+  ctx.fillRect(-1, 12, 10, 6); // Bottom
+
+  // Legs / Boots
+  ctx.fillStyle = "#dc2626";
+  ctx.fillRect(0, 18, 4, 14);
+  ctx.fillRect(5, 18, 4, 14);
+
+  // Floating Fire Aura
+  ctx.fillStyle = "rgba(251, 146, 60, 0.6)";
+  ctx.fillRect(-8, -16, 24, 2);
+  ctx.fillRect(-8, 30, 24, 2);
+
+  ctx.restore();
+}
+
+function drawHazardsAndProjectiles(){
+  for(const h of hazards){
+    if(h.type === "plant"){
+      const plantY = h.y - 30 + (h.offset || 0);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(h.x - 16, plantY - 16, 32, 32);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(h.x - 12, plantY - 4, 24, 8);
+    } else if(h.type === "shooter"){
+      ctx.fillStyle = "#475569"; ctx.fillRect(h.x, h.y - 30, 30, 30);
+      ctx.fillStyle = "#0f172a"; ctx.fillRect(h.x - 10, h.y - 22, 12, 12);
+    } else if(h.type === "turtle"){
+      ctx.fillStyle = "#16a34a"; ctx.fillRect(h.x - 16, h.y - 12, 32, 16);
+      if(h.spikes){
+        ctx.fillStyle = "#e2e8f0";
+        ctx.fillRect(h.x - 4, h.y - 24, 8, 12);
+      }
+    }
+  }
+
+  // Player Shots
+  for(const p of playerProjectiles){
+    if(p.type === "fireball" || p.type === "allyFire"){
+      ctx.fillStyle = "#f97316";
+      ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      ctx.fillStyle = "#fde047";
+      ctx.fillRect(p.x - p.r/2, p.y - p.r/2, p.r, p.r);
+    } else if(p.type === "icecube"){
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(p.x - p.r/2, p.y - p.r/2, p.r, p.r);
+    }
+  }
+
+  // Enemy Shots
+  for(const p of enemyProjectiles){
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+  }
+}
+
+function drawPlayerPixel(){
+  const p = player;
+  if(p.inv > 0 && Math.floor(p.inv * 14) % 2 === 0) return;
+
+  ctx.save();
+  ctx.translate(Math.round(p.x + p.w/2), Math.round(p.y + p.h/2));
+  ctx.scale(p.facing * p.superSize, p.superSize);
+
+  // Body
+  ctx.fillStyle = p.weapon === "firehot" ? "#ea580c" : p.weapon === "iceshooter" ? "#0284c7" : "#2563eb";
+  ctx.fillRect(-12, -8, 24, 26);
+  // Head / Skin
+  ctx.fillStyle = "#fde047"; ctx.fillRect(-8, -20, 16, 12);
+  // Red Cap
+  ctx.fillStyle = "#dc2626"; ctx.fillRect(-12, -26, 24, 6);
+
+  ctx.restore();
+}
+
+function drawGhostPixel(){
+  const g = ghost;
+  ctx.save();
+  ctx.translate(Math.round(g.x + g.w/2), Math.round(g.y + g.h/2));
+
+  ctx.fillStyle = g.frozen > 0 ? "rgba(56, 189, 248, 0.9)" : "rgba(241, 245, 249, 0.9)";
+  ctx.fillRect(-20, -20, 40, 36);
+  ctx.fillRect(-16, 16, 8, 8); ctx.fillRect(0, 16, 8, 8); ctx.fillRect(12, 16, 8, 8);
+
+  // Eyes
+  ctx.fillStyle = g.frozen > 0 ? "#ffffff" : "#ef4444";
+  ctx.fillRect(-12, -8, 8, 8); ctx.fillRect(4, -8, 8, 8);
+
+  ctx.restore();
+}
+
+function burst(x,y,n,color){
+  for(let i=0;i<n;i++){
+    particles.push({
+      x, y,
+      vx: (Math.random() - .5) * 260,
+      vy: (Math.random() - .7) * 260,
+      life: .4 + Math.random() * .4,
+      max: .8,
+      color,
+      size: 3 + Math.floor(Math.random() * 4)
+    });
+  }
+}
+
+function loop(ts){
+  const dt = Math.min(.033, (ts - last) / 1000 || 0);
+  last = ts;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+resetGame();
+showOverlay("SUPER ARCADE EDITION", "Run, jump, headbutt [?] blocks, shoot FireHot & Ice Cubes, and summon your Sexy Pixel Girl Heroine Ally!");
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

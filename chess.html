@@ -1,0 +1,3844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chess | Brendth</title>
+
+    <link rel="stylesheet" href="porfolio.css">
+
+    <!-- CHESS.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <style>
+
+        /* =====================================================
+           CHESS PAGE
+        ===================================================== */
+
+        .chess-page {
+            padding-bottom: 80px;
+        }
+
+        .chess-game {
+            width: min(1100px, 95%);
+            margin: 35px auto 0;
+        }
+
+
+        /* =====================================================
+           CONTROLS
+        ===================================================== */
+
+        .chess-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .chess-control {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid var(--border-strong);
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: left;
+        }
+
+        .chess-control label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 7px;
+        }
+
+        .chess-control select {
+            width: 100%;
+            background: #17131c;
+            color: white;
+            border: 0;
+            outline: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .new-game-btn {
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: white;
+            border-radius: 12px;
+            padding: 0 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+                filter .15s ease,
+                transform .15s ease;
+        }
+
+        .new-game-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+
+        /* =====================================================
+           LAYOUT
+        ===================================================== */
+
+        .chess-layout {
+            display: grid;
+            grid-template-columns: minmax(300px, 680px) 300px;
+            justify-content: center;
+            align-items: start;
+            gap: 25px;
+        }
+
+
+        /* =====================================================
+           BOARD
+        ===================================================== */
+
+        .board-container {
+            width: min(680px, 100%);
+            margin: 0 auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        #board {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(8, minmax(0, 1fr));
+
+            grid-template-rows:
+                repeat(8, minmax(0, 1fr));
+
+            overflow: hidden;
+
+            border-radius: 14px;
+            border: 4px solid #111;
+
+            background: #111;
+
+            box-shadow:
+                0 25px 60px rgba(0,0,0,.45),
+                0 0 0 1px rgba(255,255,255,.08);
+
+            user-select: none;
+        }
+
+        .sq {
+            position: relative;
+
+            width: 100%;
+            height: 100%;
+
+            min-width: 0;
+            min-height: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+
+            box-sizing: border-box;
+
+            transition:
+                filter .12s ease,
+                background .12s ease;
+        }
+
+        .sq:hover {
+            filter: brightness(1.08);
+        }
+
+        .light {
+            background: #d8c7a3;
+        }
+
+        .dark {
+            background: #8b6f47;
+        }
+
+
+        /* =====================================================
+           CHESS PIECES
+        ===================================================== */
+
+        .piece {
+            position: relative;
+
+            z-index: 5;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 88%;
+            height: 88%;
+
+            font-family:
+                "Segoe UI Symbol",
+                "Noto Sans Symbols 2",
+                "DejaVu Sans",
+                sans-serif;
+
+            font-size:
+                clamp(30px, 6.3vw, 62px);
+
+            line-height: 1;
+
+            pointer-events: none;
+
+            transform: translateY(-2px);
+
+            user-select: none;
+        }
+
+        .white-piece {
+            color: #fffdf5;
+
+            text-shadow:
+                0 2px 0 #aaa,
+                0 4px 5px rgba(0,0,0,.45);
+        }
+
+        .black-piece {
+            color: #171717;
+
+            text-shadow:
+                0 2px 1px rgba(255,255,255,.2),
+                0 4px 5px rgba(0,0,0,.55);
+        }
+
+
+        /* =====================================================
+           MOVE EFFECTS
+        ===================================================== */
+
+        .selected {
+            background:
+                rgba(255,215,80,.65) !important;
+        }
+
+        .last-move {
+            background:
+                rgba(246,211,101,.48) !important;
+        }
+
+        .legal::after {
+            content: "";
+
+            position: absolute;
+
+            width: 20%;
+            aspect-ratio: 1 / 1;
+
+            border-radius: 50%;
+
+            background:
+                rgba(0,0,0,.25);
+
+            z-index: 3;
+
+            pointer-events: none;
+        }
+
+        .capture::after {
+            content: "";
+
+            position: absolute;
+
+            width: 82%;
+            height: 82%;
+
+            border-radius: 50%;
+
+            border:
+                5px solid rgba(190,40,40,.7);
+
+            box-sizing: border-box;
+
+            z-index: 3;
+
+            pointer-events: none;
+        }
+
+        .check {
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(255,50,50,.95),
+                    rgba(255,80,80,.55),
+                    rgba(255,50,50,.2)
+                ) !important;
+        }
+
+
+        /* =====================================================
+           COORDINATES
+        ===================================================== */
+
+        .rank,
+        .file {
+            position: absolute;
+
+            z-index: 8;
+
+            font-size: 11px;
+            font-weight: 800;
+
+            pointer-events: none;
+        }
+
+        .rank {
+            left: 5px;
+            top: 4px;
+        }
+
+        .file {
+            right: 5px;
+            bottom: 4px;
+        }
+
+        .light .rank,
+        .light .file {
+            color: #8b6f47;
+        }
+
+        .dark .rank,
+        .dark .file {
+            color: #d8c7a3;
+        }
+
+
+        /* =====================================================
+           SIDE PANEL
+        ===================================================== */
+
+        .chess-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .player-card,
+        .game-status,
+        .captured-box,
+        .move-box {
+            border:
+                1px solid var(--border-strong);
+
+            border-radius: 14px;
+
+            background:
+                rgba(255,255,255,.035);
+        }
+
+        .player-card {
+            padding: 15px;
+
+            transition:
+                border-color .2s ease,
+                box-shadow .2s ease;
+        }
+
+        .player-card.active {
+            border-color: var(--accent);
+
+            box-shadow:
+                0 0 0 1px rgba(255,59,92,.15),
+                0 0 20px rgba(255,59,92,.08);
+        }
+
+        .player-top {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .player-name {
+            font-weight: 700;
+        }
+
+        .player-color {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .thinking {
+            display: none;
+
+            margin-top: 8px;
+
+            font-size: 12px;
+
+            color: var(--accent);
+
+            animation:
+                thinkingPulse 1s infinite ease-in-out;
+        }
+
+        .thinking.show {
+            display: block;
+        }
+
+        @keyframes thinkingPulse {
+            0%, 100% {
+                opacity: .45;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+
+        /* =====================================================
+           STATUS
+        ===================================================== */
+
+        .game-status {
+            text-align: center;
+            padding: 14px;
+        }
+
+        #turn {
+            margin-top: 4px;
+
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        #status {
+            margin-top: 5px;
+
+            color: var(--accent);
+
+            font-weight: 700;
+        }
+
+
+        /* =====================================================
+           CAPTURED
+        ===================================================== */
+
+        .captured-box {
+            padding: 13px 15px;
+        }
+
+        .captured-label,
+        .move-title {
+            color: var(--muted);
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+        }
+
+        .captured-pieces {
+            min-height: 28px;
+
+            margin-top: 6px;
+
+            font-size: 20px;
+
+            letter-spacing: 1px;
+        }
+
+
+        /* =====================================================
+           MOVES
+        ===================================================== */
+
+        .move-box {
+            overflow: hidden;
+        }
+
+        .move-title {
+            padding: 13px 15px;
+
+            border-bottom:
+                1px solid var(--border-strong);
+        }
+
+        #moveHistory {
+            height: 250px;
+
+            overflow-y: auto;
+
+            padding: 10px;
+        }
+
+        .move-row {
+            display: grid;
+
+            grid-template-columns:
+                35px 1fr 1fr;
+
+            padding: 6px 8px;
+
+            border-radius: 7px;
+
+            font-size: 13px;
+        }
+
+        .move-row:hover {
+            background:
+                rgba(255,255,255,.05);
+        }
+
+        .move-number {
+            color: var(--muted);
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media(max-width:850px) {
+
+            .chess-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .chess-panel {
+                display: grid;
+
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+            .move-box,
+            .game-status {
+                grid-column:
+                    1 / -1;
+            }
+
+        }
+
+
+        @media(max-width:600px) {
+
+            .chess-controls {
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+            .new-game-btn {
+                min-height: 48px;
+            }
+
+            .chess-panel {
+                display: flex;
+            }
+
+            .board-container {
+                padding: 4px;
+            }
+
+            #board {
+                border-width: 3px;
+                border-radius: 8px;
+            }
+
+            .piece {
+                font-size: 10vw;
+            }
+
+            .rank,
+            .file {
+                font-size: 8px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<header>
+
+    <nav>
+
+        <div class="logo">
+            BR<span>.</span>
+        </div>
+
+        <div class="nav-links">
+
+            <a href="index.html#projects">
+                Projects
+            </a>
+
+            <a href="index.html#games">
+                Games
+            </a>
+
+            <a href="index.html#contact">
+                Contact
+            </a>
+
+        </div>
+
+        <a
+            href="index.html"
+            class="nav-cta"
+        >
+            ← Back
+        </a>
+
+    </nav>
+
+</header>
+
+
+<main>
+
+<section
+    class="section chess-page"
+    style="opacity:1;transform:none;text-align:center;"
+>
+
+    <p class="section-label">
+        ● GAME — CHESS
+    </p>
+
+    <h2>
+        Brendth Chess
+    </h2>
+
+    <p style="margin:0 auto;">
+        Play against a friend or challenge the computer.
+    </p>
+
+
+    <div class="chess-game">
+
+
+        <!-- =====================================================
+             CONTROLS
+        ===================================================== -->
+
+        <div class="chess-controls">
+
+
+            <div class="chess-control">
+
+                <label>
+                    Game Mode
+                </label>
+
+                <select id="gameMode">
+
+                    <option value="human">
+                        Human vs Human
+                    </option>
+
+                    <option value="bot">
+                        Human vs Bot
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div
+                class="chess-control"
+                id="difficultyControl"
+                style="display:none;"
+            >
+
+                <label>
+                    Bot Level
+                </label>
+
+                <select id="difficulty">
+
+                    <option value="easy">
+                        Beginner
+                    </option>
+
+                    <option
+                        value="normal"
+                        selected
+                    >
+                        Normal
+                    </option>
+
+                    <option value="hard">
+                        Hard
+                    </option>
+
+                    <option value="pro">
+                        Pro
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="chess-control">
+
+                <label>
+                    You Play
+                </label>
+
+                <select id="playerColor">
+
+                    <option value="w">
+                        White
+                    </option>
+
+                    <option value="b">
+                        Black
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button
+                class="new-game-btn"
+                id="newGame"
+            >
+                New Game
+            </button>
+
+        </div>
+
+
+        <!-- =====================================================
+             GAME
+        ===================================================== -->
+
+        <div class="chess-layout">
+
+
+            <!-- BOARD -->
+
+            <div class="board-container">
+
+                <div id="board"></div>
+
+            </div>
+
+
+            <!-- SIDE PANEL -->
+
+            <aside class="chess-panel">
+
+
+                <div
+                    class="player-card"
+                    id="blackCard"
+                >
+
+                    <div class="player-top">
+
+                        <div>
+
+                            <div class="player-name">
+                                Black
+                            </div>
+
+                            <div class="player-color">
+                                ♚ Black
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="thinking"
+                        id="blackThinking"
+                    >
+                        ● Computer is thinking...
+                    </div>
+
+                </div>
+
+
+                <div class="game-status">
+
+                    <div>
+                        Turn
+                    </div>
+
+                    <div id="turn">
+                        White
+                    </div>
+
+                    <div id="status">
+                        Your move
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="player-card"
+                    id="whiteCard"
+                >
+
+                    <div class="player-top">
+
+                        <div>
+
+                            <div class="player-name">
+                                White
+                            </div>
+
+                            <div class="player-color">
+                                ♔ White
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="thinking"
+                        id="whiteThinking"
+                    >
+                        ● Computer is thinking...
+                    </div>
+
+                </div>
+
+
+                <div class="captured-box">
+
+                    <div class="captured-label">
+                        Captured Pieces
+                    </div>
+
+                    <div
+                        class="captured-pieces"
+                        id="captured"
+                    >
+                        —
+                    </div>
+
+                </div>
+
+
+                <div class="move-box">
+
+                    <div class="move-title">
+                        Move History
+                    </div>
+
+                    <div id="moveHistory">
+
+                        <div style="
+                            color:var(--muted);
+                            font-size:13px;
+                            padding:10px;
+                        ">
+                            No moves yet.
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+    <p>
+        © 2026 Brendth.
+        Built with HTML &amp; CSS.
+    </p>
+
+</footer>
+
+
+<script>
+
+if (typeof Chess === "undefined") {
+
+    document.getElementById("status").textContent =
+        "Chess engine could not load.";
+
+    console.error(
+        "Chess.js failed to load."
+    );
+
+} else {
+
+
+/* =====================================================
+   CREATE GAME
+===================================================== */
+
+const chess = new Chess();
+
+
+/* =====================================================
+   PIECES
+===================================================== */
+
+const PIECES = {
+
+    w: {
+        p: "♙",
+        n: "♘",
+        b: "♗",
+        r: "♖",
+        q: "♕",
+        k: "♔"
+    },
+
+    b: {
+        p: "♟",
+        n: "♞",
+        b: "♝",
+        r: "♜",
+        q: "♛",
+        k: "♚"
+    }
+
+};
+
+
+/* =====================================================
+   PIECE VALUES
+===================================================== */
+
+const VALUES = {
+
+    p: 100,
+    n: 320,
+    b: 330,
+    r: 500,
+    q: 900,
+    k: 20000
+
+};
+
+
+/* =====================================================
+   PIECE SQUARE TABLES
+===================================================== */
+
+const PAWN_TABLE = [
+     0,   0,   0,   0,   0,   0,   0,   0,
+    50,  50,  50,  50,  50,  50,  50,  50,
+    10,  10,  20,  30,  30,  20,  10,  10,
+     5,   5,  10,  25,  25,  10,   5,   5,
+     0,   0,   0,  20,  20,   0,   0,   0,
+     5,  -5, -10,   0,   0, -10,  -5,   5,
+     5,  10,  10, -20, -20,  10,  10,   5,
+     0,   0,   0,   0,   0,   0,   0,   0
+];
+
+const KNIGHT_TABLE = [
+    -50, -40, -30, -30, -30, -30, -40, -50,
+    -40, -20,   0,   0,   0,   0, -20, -40,
+    -30,   0,  10,  15,  15,  10,   0, -30,
+    -30,   5,  15,  20,  20,  15,   5, -30,
+    -30,   0,  15,  20,  20,  15,   0, -30,
+    -30,   5,  10,  15,  15,  10,   5, -30,
+    -40, -20,   0,   5,   5,   0, -20, -40,
+    -50, -40, -30, -30, -30, -30, -40, -50
+];
+
+const BISHOP_TABLE = [
+    -20, -10, -10, -10, -10, -10, -10, -20,
+    -10,   0,   0,   0,   0,   0,   0, -10,
+    -10,   0,   5,  10,  10,   5,   0, -10,
+    -10,   5,   5,  10,  10,   5,   5, -10,
+    -10,   0,  10,  10,  10,  10,   0, -10,
+    -10,  10,  10,  10,  10,  10,  10, -10,
+    -10,   5,   0,   0,   0,   0,   5, -10,
+    -20, -10, -10, -10, -10, -10, -10, -20
+];
+
+const ROOK_TABLE = [
+     0,   0,   0,   0,   0,   0,   0,   0,
+     5,  10,  10,  10,  10,  10,  10,   5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+     0,   0,   0,   5,   5,   0,   0,   0
+];
+
+const QUEEN_TABLE = [
+    -20, -10, -10,   0,   0, -10, -10, -20,
+    -10,   0,   0,   0,   0,   0,   0, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+      0,   0,   5,   5,   5,   5,   0,  -5,
+     -5,   0,   5,   5,   5,   5,   0,  -5,
+    -10,   5,   5,   5,   5,   5,   0, -10,
+    -10,   0,   5,   0,   0,   0,   0, -10,
+    -20, -10, -10,   0,   0, -10, -10, -20
+];
+
+const KING_TABLE = [
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -30, -40, -40, -50, -50, -40, -40, -30,
+    -20, -30, -30, -40, -40, -30, -30, -20,
+    -10, -20, -20, -20, -20, -20, -20, -10,
+     20,  20,   0,   0,   0,   0,  20,  20,
+     20,  30,  10,   0,   0,  10,  30,  20
+];
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const boardEl =
+    document.getElementById("board");
+
+const turnEl =
+    document.getElementById("turn");
+
+const statusEl =
+    document.getElementById("status");
+
+const gameMode =
+    document.getElementById("gameMode");
+
+const difficulty =
+    document.getElementById("difficulty");
+
+const difficultyControl =
+    document.getElementById(
+        "difficultyControl"
+    );
+
+const playerColor =
+    document.getElementById("playerColor");
+
+const newGame =
+    document.getElementById("newGame");
+
+const moveHistory =
+    document.getElementById("moveHistory");
+
+const capturedEl =
+    document.getElementById("captured");
+
+const whiteCard =
+    document.getElementById("whiteCard");
+
+const blackCard =
+    document.getElementById("blackCard");
+
+const whiteThinking =
+    document.getElementById("whiteThinking");
+
+const blackThinking =
+    document.getElementById("blackThinking");
+
+
+/* =====================================================
+   STATE
+===================================================== */
+
+let selected = null;
+
+let legalMoves = [];
+
+let lastMove = null;
+
+let thinking = false;
+
+let captured = {
+    w: [],
+    b: []
+};
+
+
+/* =====================================================
+   ENGINE STATE
+
+   These values prevent Pro from locking up
+   the browser.
+===================================================== */
+
+let searchStart = 0;
+
+let searchTimeLimit = 0;
+
+let searchNodes = 0;
+
+let searchNodeLimit = 0;
+
+let searchStopped = false;
+
+let transpositionTable = new Map();
+
+let principalMove = null;
+
+
+/* =====================================================
+   SEARCH SETTINGS
+===================================================== */
+
+const ENGINE_SETTINGS = {
+
+    easy: {
+        depth: 0,
+        time: 100
+    },
+
+    normal: {
+        depth: 2,
+        time: 350
+    },
+
+    hard: {
+        depth: 3,
+        time: 700
+    },
+
+    pro: {
+
+        /*
+            Pro uses iterative deepening.
+
+            It tries depth 1, then 2,
+            then 3, then 4.
+
+            If depth 4 takes too long,
+            the engine keeps the best move
+            found at the previous completed depth.
+        */
+
+        depth: 4,
+
+        /*
+            Hard limit prevents a browser freeze.
+        */
+
+        time: 1400,
+
+        /*
+            Absolute search-node safety limit.
+        */
+
+        nodes: 180000
+
+    }
+
+};
+
+
+/* =====================================================
+   FILES
+===================================================== */
+
+const FILES = [
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h"
+];
+
+
+/* =====================================================
+   RENDER BOARD
+===================================================== */
+
+function renderBoard() {
+
+    boardEl.innerHTML = "";
+
+
+    const blackView =
+        gameMode.value === "bot" &&
+        playerColor.value === "b";
+
+
+    for (
+        let visualRow = 0;
+        visualRow < 8;
+        visualRow++
+    ) {
+
+        for (
+            let visualCol = 0;
+            visualCol < 8;
+            visualCol++
+        ) {
+
+            const row =
+                blackView
+                    ? 7 - visualRow
+                    : visualRow;
+
+
+            const col =
+                blackView
+                    ? 7 - visualCol
+                    : visualCol;
+
+
+            const square =
+                FILES[col] +
+                (8 - row);
+
+
+            const piece =
+                chess.get(square);
+
+
+            const sq =
+                document.createElement("div");
+
+
+            sq.className =
+                "sq " +
+                (
+                    (row + col) % 2 === 0
+                        ? "light"
+                        : "dark"
+                );
+
+
+            if (
+                lastMove &&
+                (
+                    lastMove.from === square ||
+                    lastMove.to === square
+                )
+            ) {
+
+                sq.classList.add(
+                    "last-move"
+                );
+
+            }
+
+
+            if (
+                selected === square
+            ) {
+
+                sq.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            const possible =
+                legalMoves.find(
+                    move =>
+                        move.to === square
+                );
+
+
+            if (possible) {
+
+                if (
+                    chess.get(square)
+                ) {
+
+                    sq.classList.add(
+                        "capture"
+                    );
+
+                } else {
+
+                    sq.classList.add(
+                        "legal"
+                    );
+
+                }
+
+            }
+
+
+            if (
+                piece &&
+                piece.type === "k" &&
+                piece.color === chess.turn() &&
+                chess.in_check()
+            ) {
+
+                sq.classList.add(
+                    "check"
+                );
+
+            }
+
+
+            if (piece) {
+
+                const pieceEl =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                pieceEl.className =
+                    "piece " +
+                    (
+                        piece.color === "w"
+                            ? "white-piece"
+                            : "black-piece"
+                    );
+
+
+                pieceEl.textContent =
+                    PIECES[
+                        piece.color
+                    ][
+                        piece.type
+                    ];
+
+
+                sq.appendChild(
+                    pieceEl
+                );
+
+            }
+
+
+            if (col === 0) {
+
+                const rank =
+                    document.createElement(
+                        "span"
+                    );
+
+                rank.className =
+                    "rank";
+
+                rank.textContent =
+                    8 - row;
+
+                sq.appendChild(
+                    rank
+                );
+
+            }
+
+
+            if (row === 7) {
+
+                const file =
+                    document.createElement(
+                        "span"
+                    );
+
+                file.className =
+                    "file";
+
+                file.textContent =
+                    FILES[col];
+
+                sq.appendChild(
+                    file
+                );
+
+            }
+
+
+            sq.onclick = () =>
+                clickSquare(square);
+
+
+            boardEl.appendChild(
+                sq
+            );
+
+        }
+
+    }
+
+
+    updatePanel();
+
+}
+
+
+/* =====================================================
+   CLICK SQUARE
+===================================================== */
+
+function clickSquare(square) {
+
+    if (thinking)
+        return;
+
+    if (chess.game_over())
+        return;
+
+
+    if (
+        gameMode.value === "bot" &&
+        chess.turn() !== playerColor.value
+    ) {
+
+        return;
+
+    }
+
+
+    const piece =
+        chess.get(square);
+
+
+    if (!selected) {
+
+        if (
+            piece &&
+            piece.color === chess.turn()
+        ) {
+
+            selected = square;
+
+            legalMoves =
+                chess.moves({
+                    square: square,
+                    verbose: true
+                });
+
+
+            renderBoard();
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        piece &&
+        piece.color === chess.turn()
+    ) {
+
+        selected = square;
+
+        legalMoves =
+            chess.moves({
+                square: square,
+                verbose: true
+            });
+
+
+        renderBoard();
+
+        return;
+
+    }
+
+
+    const move =
+        legalMoves.find(
+            item =>
+                item.to === square
+        );
+
+
+    if (!move) {
+
+        selected = null;
+
+        legalMoves = [];
+
+        renderBoard();
+
+        return;
+
+    }
+
+
+    makeMove(
+        selected,
+        square
+    );
+
+}
+
+
+/* =====================================================
+   MAKE MOVE
+===================================================== */
+
+function makeMove(
+    from,
+    to
+) {
+
+    const piece =
+        chess.get(from);
+
+
+    let promotion = "q";
+
+
+    if (
+        piece &&
+        piece.type === "p" &&
+        (
+            to[1] === "1" ||
+            to[1] === "8"
+        )
+    ) {
+
+        let answer =
+            prompt(
+                "Promote to Q, R, B or N",
+                "Q"
+            );
+
+
+        answer =
+            answer
+                ? answer.toLowerCase()
+                : "q";
+
+
+        if (
+            ![
+                "q",
+                "r",
+                "b",
+                "n"
+            ].includes(answer)
+        ) {
+
+            answer = "q";
+
+        }
+
+
+        promotion = answer;
+
+    }
+
+
+    let move;
+
+
+    try {
+
+        move =
+            chess.move({
+                from: from,
+                to: to,
+                promotion: promotion
+            });
+
+    } catch (error) {
+
+        console.error(
+            "Chess move error:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    if (!move)
+        return;
+
+
+    if (move.captured) {
+
+        captured[
+            move.color
+        ].push(
+            move.captured
+        );
+
+    }
+
+
+    lastMove = {
+
+        from: move.from,
+        to: move.to
+
+    };
+
+
+    selected = null;
+
+    legalMoves = [];
+
+
+    renderBoard();
+
+    updateHistory();
+
+    updatePanel();
+
+
+    /*
+        Only schedule the computer after a
+        human move.
+
+        This avoids recursive bot timers.
+    */
+
+    if (
+        gameMode.value === "bot" &&
+        !chess.game_over() &&
+        chess.turn() !== playerColor.value
+    ) {
+
+        startBotThinking();
+
+    }
+
+}
+
+
+/* =====================================================
+   START BOT THINKING
+===================================================== */
+
+function startBotThinking() {
+
+    if (thinking)
+        return;
+
+    if (chess.game_over())
+        return;
+
+
+    thinking = true;
+
+    updatePanel();
+
+
+    const level =
+        difficulty.value;
+
+
+    const delay =
+        level === "pro"
+            ? 450
+            : level === "hard"
+                ? 350
+                : 250;
+
+
+    setTimeout(
+        () => {
+
+            if (!thinking)
+                return;
+
+            botMove();
+
+        },
+        delay
+    );
+
+}
+
+
+/* =====================================================
+   BOT MOVE
+===================================================== */
+
+function botMove() {
+
+    if (
+        chess.game_over()
+    ) {
+
+        thinking = false;
+
+        updatePanel();
+
+        return;
+
+    }
+
+
+    const level =
+        difficulty.value;
+
+
+    let move = null;
+
+
+    try {
+
+        if (
+            level === "easy"
+        ) {
+
+            move =
+                chooseEasyMove();
+
+        }
+
+        else if (
+            level === "normal"
+        ) {
+
+            move =
+                chooseSearchMove(
+                    2,
+                    350,
+                    60000
+                );
+
+        }
+
+        else if (
+            level === "hard"
+        ) {
+
+            move =
+                chooseSearchMove(
+                    3,
+                    700,
+                    100000
+                );
+
+        }
+
+        else {
+
+            /*
+                PRO ENGINE
+
+                Iterative deepening.
+                Time-limited.
+                Node-limited.
+                Transposition cache.
+                Alpha-beta pruning.
+                Quiescence search.
+                Strong move ordering.
+            */
+
+            move =
+                chooseProMove();
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Bot engine error:",
+            error
+        );
+
+        /*
+            Safety fallback.
+
+            Even if something unexpected
+            happens inside the search,
+            the game still makes a legal move.
+        */
+
+        const fallback =
+            chess.moves({
+                verbose: true
+            });
+
+
+        if (fallback.length) {
+
+            move =
+                fallback[
+                    Math.floor(
+                        Math.random() *
+                        fallback.length
+                    )
+                ];
+
+        }
+
+    }
+
+
+    /*
+        The search is finished.
+        Allow the UI to continue.
+    */
+
+    thinking = false;
+
+
+    if (
+        move &&
+        !chess.game_over()
+    ) {
+
+        playBotMove(move);
+
+    }
+
+
+    updatePanel();
+
+}
+
+
+/* =====================================================
+   PLAY BOT MOVE
+===================================================== */
+
+function playBotMove(move) {
+
+    let result;
+
+
+    try {
+
+        result =
+            chess.move({
+                from: move.from,
+                to: move.to,
+                promotion:
+                    move.promotion || "q"
+            });
+
+    } catch (error) {
+
+        console.error(
+            "Bot move failed:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    if (!result)
+        return;
+
+
+    if (result.captured) {
+
+        captured[
+            result.color
+        ].push(
+            result.captured
+        );
+
+    }
+
+
+    lastMove = {
+
+        from: result.from,
+        to: result.to
+
+    };
+
+
+    selected = null;
+
+    legalMoves = [];
+
+
+    renderBoard();
+
+    updateHistory();
+
+    updatePanel();
+
+}
+
+
+/* =====================================================
+   EASY MOVE
+===================================================== */
+
+function chooseEasyMove() {
+
+    const moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    if (!moves.length)
+        return null;
+
+
+    const captures =
+        moves.filter(
+            move =>
+                move.captured
+        );
+
+
+    if (
+        captures.length &&
+        Math.random() < 0.6
+    ) {
+
+        return captures[
+            Math.floor(
+                Math.random() *
+                captures.length
+            )
+        ];
+
+    }
+
+
+    return moves[
+        Math.floor(
+            Math.random() *
+            moves.length
+        )
+    ];
+
+}
+
+
+/* =====================================================
+   GENERIC SEARCH MOVE
+===================================================== */
+
+function chooseSearchMove(
+    depth,
+    timeLimit,
+    nodeLimit
+) {
+
+    const moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    if (!moves.length)
+        return null;
+
+
+    searchStart =
+        performance.now();
+
+    searchTimeLimit =
+        timeLimit;
+
+    searchNodes = 0;
+
+    searchNodeLimit =
+        nodeLimit;
+
+    searchStopped = false;
+
+    transpositionTable.clear();
+
+
+    orderMoves(
+        moves,
+        null
+    );
+
+
+    let bestMove =
+        moves[0];
+
+    let bestScore =
+        chess.turn() === "w"
+            ? -Infinity
+            : Infinity;
+
+
+    const maximizing =
+        chess.turn() === "w";
+
+
+    for (
+        const move of moves
+    ) {
+
+        if (
+            shouldStopSearch()
+        ) {
+
+            break;
+
+        }
+
+
+        makeSearchMove(move);
+
+
+        const score =
+            minimax(
+                depth - 1,
+                -Infinity,
+                Infinity
+            );
+
+
+        chess.undo();
+
+
+        if (
+            searchStopped
+        ) {
+
+            break;
+
+        }
+
+
+        if (
+            maximizing
+        ) {
+
+            if (
+                score > bestScore
+            ) {
+
+                bestScore = score;
+
+                bestMove = move;
+
+            }
+
+        } else {
+
+            if (
+                score < bestScore
+            ) {
+
+                bestScore = score;
+
+                bestMove = move;
+
+            }
+
+        }
+
+    }
+
+
+    return bestMove;
+
+}
+
+
+/* =====================================================
+   PRO MOVE
+===================================================== */
+
+function chooseProMove() {
+
+    const moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    if (!moves.length)
+        return null;
+
+
+    /*
+        Start with a legal move so the engine
+        always has a safe fallback.
+    */
+
+    let bestMove =
+        moves[0];
+
+
+    principalMove =
+        null;
+
+
+    searchStart =
+        performance.now();
+
+    searchTimeLimit =
+        ENGINE_SETTINGS.pro.time;
+
+    searchNodeLimit =
+        ENGINE_SETTINGS.pro.nodes;
+
+    searchNodes = 0;
+
+    searchStopped = false;
+
+    transpositionTable.clear();
+
+
+    /*
+        Iterative deepening.
+
+        The important difference from the
+        old code is that we DO NOT search
+        every move with a separate full
+        depth-4 tree.
+
+        Instead:
+
+        depth 1
+        depth 2
+        depth 3
+        depth 4
+
+        and retain the last completed result.
+    */
+
+    for (
+        let depth = 1;
+        depth <= ENGINE_SETTINGS.pro.depth;
+        depth++
+    ) {
+
+        if (
+            shouldStopSearch()
+        ) {
+
+            break;
+
+        }
+
+
+        searchStopped = false;
+
+
+        const result =
+            searchRoot(
+                depth
+            );
+
+
+        /*
+            Only accept a result if the
+            entire depth finished.
+
+            This is important.
+
+            If the timer expires halfway
+            through depth 4, we keep the
+            completed depth-3 result.
+        */
+
+        if (
+            !searchStopped &&
+            result &&
+            result.move
+        ) {
+
+            bestMove =
+                result.move;
+
+            principalMove =
+                result.move;
+
+        } else {
+
+            break;
+
+        }
+
+
+        /*
+            If we have found a forced
+            mate, no deeper search is needed.
+        */
+
+        if (
+            Math.abs(
+                result.score
+            ) >= 900000
+        ) {
+
+            break;
+
+        }
+
+    }
+
+
+    return bestMove;
+
+}
+
+
+/* =====================================================
+   ROOT SEARCH
+===================================================== */
+
+function searchRoot(depth) {
+
+    const moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    if (!moves.length)
+        return null;
+
+
+    orderMoves(
+        moves,
+        principalMove
+    );
+
+
+    const maximizing =
+        chess.turn() === "w";
+
+
+    let bestMove =
+        null;
+
+
+    let bestScore =
+        maximizing
+            ? -Infinity
+            : Infinity;
+
+
+    let alpha =
+        -Infinity;
+
+    let beta =
+        Infinity;
+
+
+    for (
+        const move of moves
+    ) {
+
+        if (
+            shouldStopSearch()
+        ) {
+
+            searchStopped = true;
+
+            return null;
+
+        }
+
+
+        makeSearchMove(move);
+
+
+        const score =
+            minimax(
+                depth - 1,
+                alpha,
+                beta
+            );
+
+
+        chess.undo();
+
+
+        if (
+            searchStopped
+        ) {
+
+            return null;
+
+        }
+
+
+        if (
+            maximizing
+        ) {
+
+            if (
+                score > bestScore
+            ) {
+
+                bestScore = score;
+
+                bestMove = move;
+
+            }
+
+            alpha =
+                Math.max(
+                    alpha,
+                    bestScore
+                );
+
+        } else {
+
+            if (
+                score < bestScore
+            ) {
+
+                bestScore = score;
+
+                bestMove = move;
+
+            }
+
+            beta =
+                Math.min(
+                    beta,
+                    bestScore
+                );
+
+        }
+
+
+        if (
+            beta <= alpha
+        ) {
+
+            break;
+
+        }
+
+    }
+
+
+    return {
+
+        move: bestMove,
+
+        score: bestScore
+
+    };
+
+}
+
+
+/* =====================================================
+   MINIMAX
+===================================================== */
+
+function minimax(
+    depth,
+    alpha,
+    beta
+) {
+
+    if (
+        shouldStopSearch()
+    ) {
+
+        searchStopped = true;
+
+        return 0;
+
+    }
+
+
+    searchNodes++;
+
+
+    /*
+        Terminal positions first.
+    */
+
+    if (
+        chess.in_checkmate()
+    ) {
+
+        /*
+            The side to move is checkmated.
+
+            Positive score = White advantage.
+            Negative score = Black advantage.
+
+            Depth is included so the engine
+            prefers faster mates and slower
+            losses.
+        */
+
+        return chess.turn() === "w"
+            ? -1000000 - depth
+            : 1000000 + depth;
+
+    }
+
+
+    if (
+        chess.in_draw() ||
+        chess.in_stalemate()
+    ) {
+
+        return 0;
+
+    }
+
+
+    /*
+        Quiescence at the leaf.
+
+        This prevents the engine from stopping
+        immediately before an obvious capture.
+    */
+
+    if (
+        depth <= 0
+    ) {
+
+        return quiescence(
+            alpha,
+            beta,
+            3
+        );
+
+    }
+
+
+    const key =
+        getPositionKey();
+
+
+    const cached =
+        transpositionTable.get(
+            key
+        );
+
+
+    if (
+        cached &&
+        cached.depth >= depth
+    ) {
+
+        if (
+            cached.flag === "EXACT"
+        ) {
+
+            return cached.score;
+
+        }
+
+        if (
+            cached.flag === "LOWER" &&
+            cached.score > alpha
+        ) {
+
+            alpha =
+                cached.score;
+
+        }
+
+        else if (
+            cached.flag === "UPPER" &&
+            cached.score < beta
+        ) {
+
+            beta =
+                cached.score;
+
+        }
+
+
+        if (
+            alpha >= beta
+        ) {
+
+            return cached.score;
+
+        }
+
+    }
+
+
+    const originalAlpha =
+        alpha;
+
+    const originalBeta =
+        beta;
+
+
+    const moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    if (!moves.length) {
+
+        return evaluate();
+
+    }
+
+
+    orderMoves(
+        moves,
+        cached
+            ? cached.move
+            : null
+    );
+
+
+    const maximizing =
+        chess.turn() === "w";
+
+
+    let best =
+        maximizing
+            ? -Infinity
+            : Infinity;
+
+
+    let bestMove =
+        null;
+
+
+    for (
+        const move of moves
+    ) {
+
+        if (
+            shouldStopSearch()
+        ) {
+
+            searchStopped = true;
+
+            return 0;
+
+        }
+
+
+        makeSearchMove(move);
+
+
+        const score =
+            minimax(
+                depth - 1,
+                alpha,
+                beta
+            );
+
+
+        chess.undo();
+
+
+        if (
+            searchStopped
+        ) {
+
+            return 0;
+
+        }
+
+
+        if (
+            maximizing
+        ) {
+
+            if (
+                score > best
+            ) {
+
+                best = score;
+
+                bestMove = move;
+
+            }
+
+
+            alpha =
+                Math.max(
+                    alpha,
+                    best
+                );
+
+        } else {
+
+            if (
+                score < best
+            ) {
+
+                best = score;
+
+                bestMove = move;
+
+            }
+
+
+            beta =
+                Math.min(
+                    beta,
+                    best
+                );
+
+        }
+
+
+        if (
+            beta <= alpha
+        ) {
+
+            break;
+
+        }
+
+    }
+
+
+    let flag =
+        "EXACT";
+
+
+    if (
+        best <= originalAlpha
+    ) {
+
+        flag =
+            "UPPER";
+
+    }
+
+    else if (
+        best >= originalBeta
+    ) {
+
+        flag =
+            "LOWER";
+
+    }
+
+
+    transpositionTable.set(
+        key,
+        {
+            depth: depth,
+            score: best,
+            flag: flag,
+            move: bestMove
+        }
+    );
+
+
+    /*
+        Keep the table under control.
+
+        This is important for long games.
+    */
+
+    if (
+        transpositionTable.size > 60000
+    ) {
+
+        trimTranspositionTable();
+
+    }
+
+
+    return best;
+
+}
+
+
+/* =====================================================
+   QUIESCENCE SEARCH
+===================================================== */
+
+function quiescence(
+    alpha,
+    beta,
+    depth
+) {
+
+    if (
+        shouldStopSearch()
+    ) {
+
+        searchStopped = true;
+
+        return 0;
+
+    }
+
+
+    searchNodes++;
+
+
+    if (
+        chess.in_checkmate()
+    ) {
+
+        return chess.turn() === "w"
+            ? -1000000
+            : 1000000;
+
+    }
+
+
+    if (
+        chess.in_draw()
+    ) {
+
+        return 0;
+
+    }
+
+
+    const standPat =
+        evaluate();
+
+
+    const maximizing =
+        chess.turn() === "w";
+
+
+    if (
+        depth <= 0
+    ) {
+
+        return standPat;
+
+    }
+
+
+    if (
+        maximizing
+    ) {
+
+        if (
+            standPat >= beta
+        ) {
+
+            return standPat;
+
+        }
+
+        alpha =
+            Math.max(
+                alpha,
+                standPat
+            );
+
+    } else {
+
+        if (
+            standPat <= alpha
+        ) {
+
+            return standPat;
+
+        }
+
+        beta =
+            Math.min(
+                beta,
+                standPat
+            );
+
+    }
+
+
+    let moves =
+        chess.moves({
+            verbose: true
+        });
+
+
+    /*
+        Only examine tactical moves.
+
+        Captures and promotions keep the
+        quiescence search manageable.
+    */
+
+    moves =
+        moves.filter(
+            move =>
+                move.captured ||
+                move.promotion
+        );
+
+
+    orderMoves(
+        moves,
+        null
+    );
+
+
+    if (
+        maximizing
+    ) {
+
+        let best =
+            standPat;
+
+
+        for (
+            const move of moves
+        ) {
+
+            if (
+                shouldStopSearch()
+            ) {
+
+                searchStopped = true;
+
+                return 0;
+
+            }
+
+
+            makeSearchMove(move);
+
+
+            const score =
+                quiescence(
+                    alpha,
+                    beta,
+                    depth - 1
+                );
+
+
+            chess.undo();
+
+
+            if (
+                searchStopped
+            ) {
+
+                return 0;
+
+            }
+
+
+            best =
+                Math.max(
+                    best,
+                    score
+                );
+
+
+            alpha =
+                Math.max(
+                    alpha,
+                    score
+                );
+
+
+            if (
+                beta <= alpha
+            ) {
+
+                break;
+
+            }
+
+        }
+
+
+        return best;
+
+    }
+
+
+    else {
+
+        let best =
+            standPat;
+
+
+        for (
+            const move of moves
+        ) {
+
+            if (
+                shouldStopSearch()
+            ) {
+
+                searchStopped = true;
+
+                return 0;
+
+            }
+
+
+            makeSearchMove(move);
+
+
+            const score =
+                quiescence(
+                    alpha,
+                    beta,
+                    depth - 1
+                );
+
+
+            chess.undo();
+
+
+            if (
+                searchStopped
+            ) {
+
+                return 0;
+
+            }
+
+
+            best =
+                Math.min(
+                    best,
+                    score
+                );
+
+
+            beta =
+                Math.min(
+                    beta,
+                    score
+                );
+
+
+            if (
+                beta <= alpha
+            ) {
+
+                break;
+
+            }
+
+        }
+
+
+        return best;
+
+    }
+
+}
+
+
+/* =====================================================
+   MOVE ORDERING
+===================================================== */
+
+function orderMoves(
+    moves,
+    preferredMove
+) {
+
+    moves.sort(
+        (a, b) => {
+
+            const scoreA =
+                moveOrderingScore(
+                    a,
+                    preferredMove
+                );
+
+            const scoreB =
+                moveOrderingScore(
+                    b,
+                    preferredMove
+                );
+
+
+            return scoreB - scoreA;
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   MOVE ORDERING SCORE
+===================================================== */
+
+function moveOrderingScore(
+    move,
+    preferredMove
+) {
+
+    let score = 0;
+
+
+    /*
+        Principal variation move first.
+    */
+
+    if (
+        preferredMove &&
+        sameMove(
+            move,
+            preferredMove
+        )
+    ) {
+
+        score += 100000;
+
+    }
+
+
+    /*
+        Captures.
+
+        MVV-LVA:
+        Most Valuable Victim -
+        Least Valuable Attacker.
+    */
+
+    if (
+        move.captured
+    ) {
+
+        score +=
+            10000 +
+            VALUES[
+                move.captured
+            ] -
+            (
+                VALUES[
+                    move.piece
+                ] / 10
+            );
+
+    }
+
+
+    /*
+        Promotions.
+    */
+
+    if (
+        move.promotion
+    ) {
+
+        score +=
+            9000 +
+            VALUES[
+                move.promotion
+            ];
+
+    }
+
+
+    /*
+        Castling.
+    */
+
+    if (
+        move.flags &&
+        (
+            move.flags.includes("k") ||
+            move.flags.includes("q")
+        )
+    ) {
+
+        score += 300;
+
+    }
+
+
+    /*
+        Center moves.
+    */
+
+    if (
+        [
+            "d4",
+            "e4",
+            "d5",
+            "e5"
+        ].includes(move.to)
+    ) {
+
+        score += 100;
+
+    }
+
+
+    return score;
+
+}
+
+
+/* =====================================================
+   SEARCH MOVE
+===================================================== */
+
+function makeSearchMove(move) {
+
+    chess.move({
+        from: move.from,
+        to: move.to,
+        promotion:
+            move.promotion || "q"
+    });
+
+}
+
+
+/* =====================================================
+   SAME MOVE
+===================================================== */
+
+function sameMove(
+    a,
+    b
+) {
+
+    if (!a || !b)
+        return false;
+
+
+    return (
+        a.from === b.from &&
+        a.to === b.to &&
+        (
+            a.promotion || null
+        ) === (
+            b.promotion || null
+        )
+    );
+
+}
+
+
+/* =====================================================
+   SEARCH LIMIT
+===================================================== */
+
+function shouldStopSearch() {
+
+    if (
+        searchStopped
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        searchNodes >= searchNodeLimit
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        performance.now() -
+        searchStart >=
+        searchTimeLimit
+    ) {
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =====================================================
+   POSITION KEY
+===================================================== */
+
+function getPositionKey() {
+
+    /*
+        FEN contains:
+
+        board
+        side to move
+        castling rights
+        en-passant square
+
+        The halfmove/fullmove counters are
+        irrelevant for this evaluation cache.
+    */
+
+    const fen =
+        chess.fen().split(" ");
+
+
+    return (
+        fen[0] +
+        " " +
+        fen[1] +
+        " " +
+        fen[2] +
+        " " +
+        fen[3]
+    );
+
+}
+
+
+/* =====================================================
+   TRANSPOSITION TABLE CLEANUP
+===================================================== */
+
+function trimTranspositionTable() {
+
+    const entries =
+        Array.from(
+            transpositionTable.entries()
+        );
+
+
+    /*
+        Keep roughly the newest half.
+
+        This prevents memory usage from
+        growing forever.
+    */
+
+    const keep =
+        entries.slice(
+            Math.floor(
+                entries.length / 2
+            )
+        );
+
+
+    transpositionTable =
+        new Map(
+            keep
+        );
+
+}
+
+
+/* =====================================================
+   POSITIONAL VALUE
+===================================================== */
+
+function positionalValue(
+    piece,
+    row,
+    col
+) {
+
+    let table;
+
+
+    if (
+        piece.type === "p"
+    )
+        table = PAWN_TABLE;
+
+    else if (
+        piece.type === "n"
+    )
+        table = KNIGHT_TABLE;
+
+    else if (
+        piece.type === "b"
+    )
+        table = BISHOP_TABLE;
+
+    else if (
+        piece.type === "r"
+    )
+        table = ROOK_TABLE;
+
+    else if (
+        piece.type === "q"
+    )
+        table = QUEEN_TABLE;
+
+    else
+        table = KING_TABLE;
+
+
+    const index =
+        piece.color === "w"
+            ? row * 8 + col
+            : (7 - row) * 8 + col;
+
+
+    return table[index];
+
+}
+
+
+/* =====================================================
+   EVALUATION
+===================================================== */
+
+function evaluate() {
+
+    if (
+        chess.in_checkmate()
+    ) {
+
+        return chess.turn() === "w"
+            ? -1000000
+            : 1000000;
+
+    }
+
+
+    if (
+        chess.in_draw() ||
+        chess.in_stalemate()
+    ) {
+
+        return 0;
+
+    }
+
+
+    let score = 0;
+
+
+    const board =
+        chess.board();
+
+
+    /*
+        Material + positional value.
+    */
+
+    for (
+        let row = 0;
+        row < 8;
+        row++
+    ) {
+
+        for (
+            let col = 0;
+            col < 8;
+            col++
+        ) {
+
+            const piece =
+                board[row][col];
+
+
+            if (!piece)
+                continue;
+
+
+            let value =
+                VALUES[
+                    piece.type
+                ];
+
+
+            value +=
+                positionalValue(
+                    piece,
+                    row,
+                    col
+                );
+
+
+            if (
+                piece.color === "w"
+            ) {
+
+                score += value;
+
+            } else {
+
+                score -= value;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+        Center occupancy.
+    */
+
+    const center = [
+        "d4",
+        "e4",
+        "d5",
+        "e5"
+    ];
+
+
+    for (
+        const square of center
+    ) {
+
+        const piece =
+            chess.get(square);
+
+
+        if (!piece)
+            continue;
+
+
+        if (
+            piece.color === "w"
+        ) {
+
+            score += 25;
+
+        } else {
+
+            score -= 25;
+
+        }
+
+    }
+
+
+    /*
+        Development / mobility.
+
+        IMPORTANT:
+
+        The old version called chess.moves()
+        inside every leaf.
+
+        That was one of the biggest causes
+        of Pro becoming slow.
+
+        We only calculate mobility when the
+        position actually reaches evaluation.
+    */
+
+    const mobility =
+        chess.moves().length;
+
+
+    if (
+        chess.turn() === "w"
+    ) {
+
+        score +=
+            mobility * 2;
+
+    } else {
+
+        score -=
+            mobility * 2;
+
+    }
+
+
+    /*
+        Check bonus.
+    */
+
+    if (
+        chess.in_check()
+    ) {
+
+        if (
+            chess.turn() === "w"
+        ) {
+
+            score -= 45;
+
+        } else {
+
+            score += 45;
+
+        }
+
+    }
+
+
+    return score;
+
+}
+
+
+/* =====================================================
+   MOVE HISTORY
+===================================================== */
+
+function updateHistory() {
+
+    const history =
+        chess.history();
+
+
+    if (!history.length) {
+
+        moveHistory.innerHTML = `
+            <div style="
+                color:var(--muted);
+                font-size:13px;
+                padding:10px;
+            ">
+                No moves yet.
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    for (
+        let i = 0;
+        i < history.length;
+        i += 2
+    ) {
+
+        html += `
+
+            <div class="move-row">
+
+                <span class="move-number">
+                    ${Math.floor(i / 2) + 1}.
+                </span>
+
+                <span>
+                    ${history[i] || ""}
+                </span>
+
+                <span>
+                    ${history[i + 1] || ""}
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+
+    moveHistory.innerHTML =
+        html;
+
+
+    moveHistory.scrollTop =
+        moveHistory.scrollHeight;
+
+}
+
+
+/* =====================================================
+   CAPTURED PIECES
+===================================================== */
+
+function updateCaptured() {
+
+    const result = [];
+
+
+    for (
+        const piece of captured.b
+    ) {
+
+        result.push(
+            PIECES.b[piece]
+        );
+
+    }
+
+
+    for (
+        const piece of captured.w
+    ) {
+
+        result.push(
+            PIECES.w[piece]
+        );
+
+    }
+
+
+    capturedEl.textContent =
+        result.length
+            ? result.join(" ")
+            : "—";
+
+}
+
+
+/* =====================================================
+   STATUS PANEL
+===================================================== */
+
+function updatePanel() {
+
+    const turn =
+        chess.turn();
+
+
+    turnEl.textContent =
+        turn === "w"
+            ? "White"
+            : "Black";
+
+
+    whiteCard.classList.toggle(
+        "active",
+        turn === "w"
+    );
+
+
+    blackCard.classList.toggle(
+        "active",
+        turn === "b"
+    );
+
+
+    whiteThinking.classList.toggle(
+        "show",
+        thinking &&
+        turn === "w"
+    );
+
+
+    blackThinking.classList.toggle(
+        "show",
+        thinking &&
+        turn === "b"
+    );
+
+
+    updateCaptured();
+
+
+    if (
+        chess.in_checkmate()
+    ) {
+
+        const winner =
+            turn === "w"
+                ? "Black"
+                : "White";
+
+
+        statusEl.textContent =
+            `Checkmate — ${winner} wins`;
+
+        return;
+
+    }
+
+
+    if (
+        chess.in_draw()
+    ) {
+
+        statusEl.textContent =
+            "Draw";
+
+        return;
+
+    }
+
+
+    if (
+        chess.in_check()
+    ) {
+
+        statusEl.textContent =
+            "Check!";
+
+        return;
+
+    }
+
+
+    if (
+        thinking
+    ) {
+
+        statusEl.textContent =
+            "Computer is thinking...";
+
+        return;
+
+    }
+
+
+    if (
+        gameMode.value === "bot"
+    ) {
+
+        if (
+            chess.turn() ===
+            playerColor.value
+        ) {
+
+            statusEl.textContent =
+                "Your move";
+
+        } else {
+
+            statusEl.textContent =
+                "Computer's turn";
+
+        }
+
+        return;
+
+    }
+
+
+    statusEl.textContent =
+        "Make your move";
+
+}
+
+
+/* =====================================================
+   NEW GAME
+===================================================== */
+
+function startNewGame() {
+
+    /*
+        Stop any old bot search/timer.
+    */
+
+    thinking = false;
+
+    searchStopped = true;
+
+
+    chess.reset();
+
+
+    selected = null;
+
+    legalMoves = [];
+
+    lastMove = null;
+
+
+    captured = {
+        w: [],
+        b: []
+    };
+
+
+    transpositionTable.clear();
+
+    principalMove = null;
+
+
+    renderBoard();
+
+    updateHistory();
+
+    updatePanel();
+
+
+    /*
+        Computer starts if player chose Black.
+    */
+
+    if (
+        gameMode.value === "bot" &&
+        playerColor.value === "b"
+    ) {
+
+        startBotThinking();
+
+    }
+
+}
+
+
+/* =====================================================
+   CONTROLS
+===================================================== */
+
+gameMode.addEventListener(
+    "change",
+    () => {
+
+        difficultyControl.style.display =
+            gameMode.value === "bot"
+                ? "block"
+                : "none";
+
+
+        startNewGame();
+
+    }
+);
+
+
+difficulty.addEventListener(
+    "change",
+    startNewGame
+);
+
+
+playerColor.addEventListener(
+    "change",
+    startNewGame
+);
+
+
+newGame.addEventListener(
+    "click",
+    startNewGame
+);
+
+
+/* =====================================================
+   START
+===================================================== */
+
+difficultyControl.style.display =
+    gameMode.value === "bot"
+        ? "block"
+        : "none";
+
+
+renderBoard();
+
+updateHistory();
+
+updatePanel();
+
+}
+
+</script>
+
+</body>
+
+</html>
